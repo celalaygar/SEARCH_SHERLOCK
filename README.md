@@ -59,27 +59,36 @@ Edit the `application.yml` or `application.properties` file to configure:
 
 You can send a request to the `/search` endpoint with the username you want to query:
 ```http
-GET /search?username=johndoe
+curl --location 'http://localhost:8080/api/search/name/celalaygar'
+
 ```
 
 ## Example Response
 
 ```json
-{
-  "username": "johndoe",
-  "results": [
+[
     {
-      "platform": "GitHub",
-      "url": "https://github.com/johndoe",
-      "status": "FOUND"
+        "siteName": "Academia.edu",
+        "urlMain": "https://www.academia.edu/",
+        "urlUser": "https://independent.academia.edu/celalaygar",
+        "status": "CLAIMED",
+        "httpStatus": "200"
     },
     {
-      "platform": "Twitter",
-      "url": "https://twitter.com/johndoe",
-      "status": "NOT_FOUND"
+        "siteName": "AdmireMe.Vip",
+        "urlMain": "https://admireme.vip/",
+        "urlUser": "https://admireme.vip/celalaygar",
+        "status": "CLAIMED",
+        "httpStatus": "301"
+    },
+    {
+        "siteName": "threads",
+        "urlMain": "https://www.threads.net/",
+        "urlUser": "https://www.threads.net/@celalaygar",
+        "status": "CLAIMED",
+        "httpStatus": "302"
     }
-  ]
-}
+]
 ```
 
 ## Reverse Proxy with Nginx
@@ -88,7 +97,7 @@ Example configuration for Nginx:
 
 ```nginx
 location /search_sherlock/ {
-    proxy_pass http://127.0.0.1:7111/;
+    proxy_pass http://127.0.0.1:8080/;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
