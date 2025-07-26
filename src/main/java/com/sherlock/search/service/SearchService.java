@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sherlock.search.model.QueryStatus;
 import com.sherlock.search.model.SiteResult;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -63,7 +64,26 @@ public class SearchService {
         }
     }
 
+
+    @PreDestroy
+    public void destroy() {
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdown();
+            try {
+                // İşlemlerin tamamlanması için bir süre bekle
+                if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow(); // Hala bitmeyenleri hemen kapat
+                }
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+
     public List<SiteResult> searchByName(String name) throws ExecutionException, InterruptedException {
+
         List<SiteResult> results = search(name);
         //shutdown();
         return results;
