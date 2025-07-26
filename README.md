@@ -58,9 +58,7 @@ Edit the `application.yml` or `application.properties` file to configure:
 ## Usage
 
 You can send a request to the `/search` endpoint with the username you want to query:
-```http
-curl --location 'http://localhost:8080/api/search/name/celalaygar'
-```
+
 
 ## Example Response
 
