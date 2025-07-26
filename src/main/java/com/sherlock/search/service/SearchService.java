@@ -65,7 +65,7 @@ public class SearchService {
 
     public List<SiteResult> searchByName(String name) throws ExecutionException, InterruptedException {
         List<SiteResult> results = search(name);
-        shutdown();
+        //shutdown();
         return results;
     }
 
