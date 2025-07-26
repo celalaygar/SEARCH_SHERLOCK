@@ -63,6 +63,12 @@ public class SearchService {
         }
     }
 
+    public List<SiteResult> searchByName(String name) throws ExecutionException, InterruptedException {
+        List<SiteResult> results = search(name);
+        shutdown();
+        return results;
+    }
+
 
     private String interpolateString(String input, String username) {
         return input.replace("{}", username);
@@ -70,12 +76,6 @@ public class SearchService {
 
     public void shutdown() {
         executorService.shutdown();
-    }
-
-    public List<SiteResult> searchByName(String name) throws ExecutionException, InterruptedException {
-        List<SiteResult> results = search(name);
-
-        return results;
     }
 
     public List<SiteResult> search(String username) throws InterruptedException, ExecutionException {
@@ -161,12 +161,12 @@ public class SearchService {
             String responseBody = response.body();
             int statusCode = response.statusCode();
 
-            if (  statusCode == 200) {
-                System.out.println("TARGET NAME   : " + siteName);
-                //System.out.println("USERNAME      : " + username);
-                System.out.println("TARGET URL    : " + url);
-                //System.out.println("RESPONSE CODE : " + statusCode);
-            }
+//            if (  statusCode == 200) {
+//                System.out.println("TARGET NAME   : " + siteName);
+//                //System.out.println("USERNAME      : " + username);
+//                System.out.println("TARGET URL    : " + url);
+//                //System.out.println("RESPONSE CODE : " + statusCode);
+//            }
             QueryStatus status = determineStatus(siteInfo, responseBody, statusCode);
             return !ObjectUtils.isEmpty(status) ? new SiteResult(siteName, urlMain, url, status, String.valueOf(statusCode)) : null;
 
