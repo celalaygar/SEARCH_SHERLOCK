@@ -29,12 +29,12 @@ Sherlock Java is a Java-based version of the popular [Sherlock Project](https://
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/sherlock-java.git
+   git clone https://github.com/celalaygar/Search_Sherlock_Spring_Boot.git 
    ```
 
 2. Navigate to the project directory:
    ```bash
-   cd sherlock-java
+   cd SearchApplication-java
    ```
 
 3. Build the project using Maven:
