@@ -65,21 +65,6 @@ public class SearchService {
     }
 
 
-    @PreDestroy
-    public void destroy() {
-        if (executorService != null && !executorService.isShutdown()) {
-            executorService.shutdown();
-            try {
-                // İşlemlerin tamamlanması için bir süre bekle
-                if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
-                    executorService.shutdownNow(); // Hala bitmeyenleri hemen kapat
-                }
-            } catch (InterruptedException e) {
-                executorService.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
 
 
     public List<SiteResult> searchByName(String name) throws ExecutionException, InterruptedException {
@@ -98,35 +83,36 @@ public class SearchService {
         executorService.shutdown();
     }
 
+    // search metodunda CompletableFuture'ları birleştirirken
     public List<SiteResult> search(String username) throws InterruptedException, ExecutionException {
-        Map<String, CompletableFuture<SiteResult>> futures = new HashMap<>();
-        Map<String, String> urlList =  new HashMap<>();
+        List<CompletableFuture<SiteResult>> futures = new ArrayList<>();
         for (Iterator<Map.Entry<String, JsonNode>> it = siteData.fields(); it.hasNext(); ) {
             Map.Entry<String, JsonNode> entry = it.next();
             String siteName = entry.getKey();
             JsonNode siteInfo = entry.getValue();
 
+            // checkSite zaten asenkron hale getirildiyse, burada tekrar supplyAsync'e gerek kalmaz
+            // Veya checkSite'ın kendisini CompletableFuture döndürecek şekilde refactor edebilirsiniz
             CompletableFuture<SiteResult> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     return checkSite(username, siteName, siteInfo);
                 } catch (Exception e) {
                     if(!ObjectUtils.isEmpty(siteInfo.get("urlMain")))
-                        return new SiteResult(siteName, siteInfo.get("urlMain").asText(), "", QueryStatus.UNKNOWN, ""  );
+                        return new SiteResult(siteName, siteInfo.get("urlMain").asText(), "", QueryStatus.UNKNOWN, "" );
                     return null;
                 }
-            }, executorService);
+            }, executorService); // Mevcut ExecutorService ile devam edin
 
-            futures.put(siteName, future);
+            futures.add(future);
         }
 
         List<SiteResult> results = new ArrayList<>();
-        for (Map.Entry<String, CompletableFuture<SiteResult>> entry : futures.entrySet()) {
-            if(!ObjectUtils.isEmpty(entry.getValue()) &&
-                    !ObjectUtils.isEmpty(entry.getValue().get()) &&
-                    entry.getValue().get().getStatus() == QueryStatus.CLAIMED)
-                results.add(entry.getValue().get());
+        for (CompletableFuture<SiteResult> future : futures) {
+            SiteResult siteResult = future.get(); // get() metodu CompletableFuture'ı tamamlanana kadar bloklar
+            if (!ObjectUtils.isEmpty(siteResult) && siteResult.getStatus() == QueryStatus.CLAIMED) {
+                results.add(siteResult);
+            }
         }
-
         return results;
     }
 
@@ -174,19 +160,15 @@ public class SearchService {
 
         long startTime = System.nanoTime();
         try {
-            HttpResponse<String> response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            // httpClient.sendAsync() kullanın
+            HttpResponse<String> response = httpClient.sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
+                    .join(); // Veya .get() ile handle edin, join() exception fırlatır
             long endTime = System.nanoTime();
             double responseTime = (endTime - startTime) / 1_000_000_000.0; // Convert to seconds
 
             String responseBody = response.body();
             int statusCode = response.statusCode();
 
-//            if (  statusCode == 200) {
-//                System.out.println("TARGET NAME   : " + siteName);
-//                //System.out.println("USERNAME      : " + username);
-//                System.out.println("TARGET URL    : " + url);
-//                //System.out.println("RESPONSE CODE : " + statusCode);
-//            }
             QueryStatus status = determineStatus(siteInfo, responseBody, statusCode);
             return !ObjectUtils.isEmpty(status) ? new SiteResult(siteName, urlMain, url, status, String.valueOf(statusCode)) : null;
 
