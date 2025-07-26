@@ -16,7 +16,7 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # Copy the built JAR from the builder stage
-COPY --from=builder /app/build/libs/job-ts-be-v2-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /app/build/libs/search-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 7111
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
