@@ -107,6 +107,6 @@ location /search_sherlock/ {
 ```
 
 ## License and Attribution
-
+İn `src/main/resources/data.json` file is from  [Sherlock Project](https://github.com/sherlock-project/sherlock).
 This project is based on the original [Sherlock Project](https://github.com/sherlock-project/sherlock) by Siddharth Dushantha.  
 It is licensed under the MIT License. The original license and author attribution are preserved.
